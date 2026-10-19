@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#46703A">
+<meta name="description" content="Kulalog: a tortoise care and growth tracker that works offline.">
+<title>Kulalog</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="kulalog-icons/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="icon" href="kulalog-icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="kulalog-icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Kulalog">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&display=swap" rel="stylesheet"></noscript>
+<link rel="stylesheet" href="css/app.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" crossorigin="anonymous" async id="chartjs"></script>
+<script src="js/logic.js" defer></script>
+<script src="js/app.js" defer></script>
+</head>
+<body>
+<header class="bar">
+  <div class="bar-in">
+    <a href="#" class="brand" aria-label="Kulalog home">
+      <img class="brand-mark" src="kulalog-icons/icon.svg" width="30" height="30" alt="">
+      Kulalog
+    </a>
+    <span class="spacer"></span>
+    <button class="icon-btn" id="openSettings" aria-label="Settings and backup">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+    </button>
+  </div>
+</header>
+
+<div class="update-bar" id="updateBar" hidden>
+  <span>A new version of Kulalog is ready.</span>
+  <button type="button" class="btn small primary" id="updateBtn">Reload</button>
+</div>
+
+<main id="app" aria-live="polite"></main>
+
+<!-- Tortoise dialog -->
+<dialog id="tDlg" aria-labelledby="tDlgTitle">
+  <form method="dialog" id="tForm">
+    <div class="dlg-head"><h2 id="tDlgTitle">Add tortoise</h2><button type="button" class="icon-btn" data-close aria-label="Close">✕</button></div>
+    <div class="dlg-body">
+      <label class="f">Name<input type="text" name="name" required maxlength="40" placeholder="e.g. Kuro"></label>
+      <label class="f">Species<select name="species" id="speciesSel"></select></label>
+      <label class="f" id="speciesOtherWrap" hidden>Species name<input type="text" name="speciesOther" maxlength="60" placeholder="Type the species"></label>
+      <div class="row">
+        <label class="f">Sex<select name="sex"><option>Unknown</option><option>Male</option><option>Female</option></select></label>
+        <label class="f">Hatch date <small>or best estimate, optional</small><input type="date" name="birth"></label>
+      </div>
+      <p class="err" id="tErr" hidden></p>
+    </div>
+    <div class="dlg-foot"><button type="button" class="btn ghost" data-close>Cancel</button><button type="submit" class="btn primary" id="tSave">Save tortoise</button></div>
+  </form>
+</dialog>
+
+<!-- Measurement dialog -->
+<dialog id="mDlg" aria-labelledby="mDlgTitle">
+  <form method="dialog" id="mForm">
+    <div class="dlg-head"><h2 id="mDlgTitle">Log measurement</h2><button type="button" class="icon-btn" data-close aria-label="Close">✕</button></div>
+    <div class="dlg-body">
+      <label class="f">Date<input type="date" name="date" required></label>
+      <div class="row">
+        <label class="f">Plastron length <small>cm</small><input type="text" inputmode="decimal" name="plastron" placeholder="12.5"></label>
+        <label class="f">Carapace length (SCL) <small>cm</small><input type="text" inputmode="decimal" name="scl" placeholder="14.2"></label>
+      </div>
+      <label class="f">Weight
+        <span class="unit-wrap"><input type="text" inputmode="decimal" name="weight" placeholder="450"><select name="wunit" aria-label="Weight unit"><option value="g">g</option><option value="kg">kg</option></select></span>
+      </label>
+      <div class="photo-pick">
+        <img id="photoPrev" alt="Selected photo" hidden>
+        <label class="btn small" style="cursor:pointer">Choose progress photo<input type="file" accept="image/*" id="photoIn" hidden></label>
+        <button type="button" class="btn small ghost danger" id="photoRm" hidden>Remove photo</button>
+      </div>
+      <label class="f">Notes<textarea name="notes" maxlength="1000" placeholder="Shell condition, growth rings, anything worth remembering"></textarea></label>
+      <p class="err" id="mErr" hidden></p>
+    </div>
+    <div class="dlg-foot"><button type="button" class="btn ghost" data-close>Cancel</button><button type="submit" class="btn primary">Save measurement</button></div>
+  </form>
+</dialog>
+
+<!-- Daily care dialog -->
+<dialog id="cDlg" aria-labelledby="cDlgTitle">
+  <form method="dialog" id="cForm">
+    <div class="dlg-head"><h2 id="cDlgTitle">Daily care</h2><button type="button" class="icon-btn" data-close aria-label="Close">✕</button></div>
+    <div class="dlg-body">
+      <label class="f">Date<input type="date" name="date" required></label>
+      <p class="hint" id="cHint" hidden></p>
+      <label class="check"><input type="checkbox" name="soaked"><span>Soaked<small>Warm water bath</small></span></label>
+      <div style="display:grid;gap:8px"><b style="font-size:.92rem">Food</b><div class="chips" id="foodChips"></div>
+        <input type="text" name="foodNote" maxlength="120" aria-label="Other food" placeholder="Anything else? e.g. dandelion, hibiscus"></div>
+      <div class="row">
+        <label class="f">Poop<select name="poop"><option value="">Not checked</option></select></label>
+        <label class="f">Urates<select name="urates"><option value="">Not checked</option></select></label>
+      </div>
+      <label class="f">Notes<textarea name="notes" maxlength="1000" placeholder="Appetite, activity, behaviour"></textarea></label>
+      <p class="err" id="cErr" hidden></p>
+    </div>
+    <div class="dlg-foot"><button type="button" class="btn ghost danger" id="cClear" hidden style="margin-right:auto">Clear this day</button><button type="button" class="btn ghost" data-close>Cancel</button><button type="submit" class="btn primary">Save care</button></div>
+  </form>
+</dialog>
+
+<!-- Settings dialog -->
+<dialog id="sDlg" aria-labelledby="sDlgTitle">
+  <div class="dlg-head"><h2 id="sDlgTitle">Settings</h2><button type="button" class="icon-btn" data-close aria-label="Close">✕</button></div>
+  <div class="dlg-body">
+    <fieldset>
+      <legend>Show weight in</legend>
+      <div class="chips" id="unitChips">
+        <label><input type="radio" name="unit" value="auto"><span>Auto (g under 1 kg)</span></label>
+        <label><input type="radio" name="unit" value="g"><span>Grams</span></label>
+        <label><input type="radio" name="unit" value="kg"><span>Kilograms</span></label>
+      </div>
+    </fieldset>
+    <fieldset>
+      <legend>Backup</legend>
+      <p class="hint">Your records live only on this device. Save a backup file now and then, and keep it somewhere safe like cloud storage or email.</p>
+      <label class="check"><input type="checkbox" id="incPhotos"><span>Include photos<small>Makes the backup much larger</small></span></label>
+      <div class="btn-row">
+        <button type="button" class="btn" id="exportJson">Export backup (.json)</button>
+        <label class="btn" style="cursor:pointer">Import backup<input type="file" accept=".json,.txt,application/json,text/plain" id="importFile" hidden></label>
+      </div>
+      <p class="hint">Importing adds the backup's records and updates matching ones. Nothing else is deleted.</p>
+      <p class="hint" id="storageStatus" hidden></p>
+    </fieldset>
+    <fieldset>
+      <legend>Spreadsheet</legend>
+      <p class="hint">All measurements of every tortoise as a CSV file, for Excel or Google Sheets.</p>
+      <div><button type="button" class="btn" id="exportCsv">Export measurements (.csv)</button></div>
+    </fieldset>
+  </div>
+</dialog>
+
+<dialog id="lightbox" class="lightbox" aria-label="Photo">
+  <div class="dlg-head"><h2 id="lbTitle">Photo</h2><button type="button" class="icon-btn" data-close aria-label="Close">✕</button></div>
+  <div class="dlg-body"><img id="lbImg" alt=""></div>
+</dialog>
+
+<div class="toast" id="toast" role="status"></div>
+</body>
+</html>

@@ -1,0 +1,10 @@
+node_modules/
+test-results/
+playwright-report/
+tests/lighthouse/reports/
+.tmp/
+.review/
+
+# Kept on this computer only, not published
+kulalog.html
+PROMPT-CLAUDE-CODE.md
