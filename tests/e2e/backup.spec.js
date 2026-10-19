@@ -539,6 +539,10 @@ test("old prototype backup: an entry without kind is split into a measurement an
 
 test("a backup copied with the original prototype's Copy backup button and saved as .txt imports fine", async ({ page, browser, baseURL }) => {
   const protoUrl = new URL("kulalog.html", String(baseURL)).href;
+  // kulalog.html (the original prototype) is kept on the maintainer's computer only: it is not in the repo and not
+  // published, because on the live site it would share the app's IndexedDB. Without it this test can't run.
+  const proto200 = (await page.request.get(protoUrl)).status() === 200;
+  test.skip(!proto200, "kulalog.html (the original prototype) isn't served here; it is kept locally only");
   // The prototype shares the app's origin (and IndexedDB), so run it in its own context.
   const ctx = await browser.newContext({ serviceWorkers: "block", timezoneId: "Asia/Jakarta", locale: "en-GB" });
   let copied, protoDb;
