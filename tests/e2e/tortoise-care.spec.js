@@ -376,8 +376,8 @@ test.describe("E2 daily care log", () => {
     await expect(dlg).toBeVisible();
     expect(await caresInDb(page, tid)).toHaveLength(0);
 
-    await fillCare(dlg, { soaked: true, foods: ["Weeds", "Flowers"], other: "dandelion", poop: "Normal, firm", notes: "Active, ate well" });
-    await expect(foodBox(dlg, "Weeds")).toBeChecked();
+    await fillCare(dlg, { soaked: true, foods: ["Grass / hay", "Flowers"], other: "dandelion", poop: "Normal, firm", notes: "Active, ate well" });
+    await expect(foodBox(dlg, "Grass / hay")).toBeChecked();
     await expect(foodBox(dlg, "Flowers")).toBeChecked();
     await expect(foodBox(dlg, "Leafy greens")).not.toBeChecked();
     await saveCare(dlg);
@@ -387,7 +387,7 @@ test.describe("E2 daily care log", () => {
 
     // The Today row in the 7-day list.
     const row = dayRow(page, today);
-    await expect(row.locator(".marks .chip")).toHaveText(["Soaked", "Weeds, Flowers +1", "Poop: Normal, firm"]);
+    await expect(row.locator(".marks .chip")).toHaveText(["Soaked", "Grass / hay, Flowers +1", "Poop: Normal, firm"]);
     await expect(row.locator(".chip.shell")).toHaveText("Soaked");
     await expect(row.locator(".chip", { hasText: "Poop:" })).not.toHaveClass(/\bbad\b/);
     await expect(row.locator(".nt")).toHaveText("Active, ate well");
@@ -403,7 +403,7 @@ test.describe("E2 daily care log", () => {
     expect(cares).toHaveLength(1);
     expect(cares[0]).toMatchObject({
       id: `c_${tid}_${today}`, kind: "care", tortoiseId: tid, date: today, soaked: true,
-      food: ["Weeds", "Flowers"], foodNote: "dandelion", poop: "Normal, firm", urates: "", notes: "Active, ate well"
+      food: ["Grass / hay", "Flowers"], foodNote: "dandelion", poop: "Normal, firm", urates: "", notes: "Active, ate well"
     });
 
     // Home card.
@@ -419,7 +419,7 @@ test.describe("E2 daily care log", () => {
     const dlg = careDlg(page);
 
     await page.getByRole("button", { name: "Log today's care" }).click();
-    await fillCare(dlg, { soaked: true, foods: ["Weeds", "Flowers"], other: "dandelion", poop: "Normal, firm", notes: "Active" });
+    await fillCare(dlg, { soaked: true, foods: ["Grass / hay", "Flowers"], other: "dandelion", poop: "Normal, firm", notes: "Active" });
     await saveCare(dlg);
     await expect(dlg).toBeHidden();
     await expectToast(page, "Care saved");
@@ -434,7 +434,7 @@ test.describe("E2 daily care log", () => {
     await expectShown(dlg.locator("#cClear"));
     await expect(dlg.locator("[name=date]")).toHaveValue(today);
     await expect(dlg.locator("[name=soaked]")).toBeChecked();
-    await expect(foodBox(dlg, "Weeds")).toBeChecked();
+    await expect(foodBox(dlg, "Grass / hay")).toBeChecked();
     await expect(foodBox(dlg, "Flowers")).toBeChecked();
     await expect(foodBox(dlg, "Leafy greens")).not.toBeChecked();
     await expect(dlg.getByRole("textbox", { name: "Other food" })).toHaveValue("dandelion");
@@ -452,13 +452,13 @@ test.describe("E2 daily care log", () => {
     const cares = await caresInDb(page, tid);
     expect(cares).toHaveLength(1);
     expect(cares[0]).toMatchObject({
-      id: `c_${tid}_${today}`, date: today, soaked: false, food: ["Weeds"], foodNote: "dandelion",
+      id: `c_${tid}_${today}`, date: today, soaked: false, food: ["Grass / hay"], foodNote: "dandelion",
       poop: "Soft", urates: "Soft white paste", notes: "Quiet day", createdAt: first.createdAt
     });
     expect((await readDb(page)).entries).toHaveLength(1);
 
     const row = dayRow(page, today);
-    await expect(row.locator(".marks .chip")).toHaveText(["Weeds, dandelion", "Poop: Soft", "Urates: Soft white paste"]);
+    await expect(row.locator(".marks .chip")).toHaveText(["Grass / hay, dandelion", "Poop: Soft", "Urates: Soft white paste"]);
     await expect(statValue(page, "Last soaked")).toHaveText("Not yet");
     await expect(statValue(page, "Last fed")).toHaveText("Today");
     await expect(statValue(page, "Last poop check")).toHaveText("Today");
@@ -466,15 +466,15 @@ test.describe("E2 daily care log", () => {
     // Emptying an existing day is refused with a pointer to "Clear this day"; the record stays.
     await page.getByRole("button", { name: "Log today's care" }).click();
     await expect(dlg.locator("#cHint")).toBeVisible();
-    await expect(foodBox(dlg, "Weeds")).toBeChecked();
-    await fillCare(dlg, { foods: ["Weeds"], other: "", poop: "", urates: "", notes: "" });
+    await expect(foodBox(dlg, "Grass / hay")).toBeChecked();
+    await fillCare(dlg, { foods: ["Grass / hay"], other: "", poop: "", urates: "", notes: "" });
     await saveCare(dlg);
     await expect(dlg.locator("#cErr")).toHaveText("Nothing is filled in. Use Clear this day to remove the record.");
     await expect(dlg).toBeVisible();
     await dlg.getByRole("button", { name: "Cancel" }).click();
     await expect(dlg).toBeHidden();
     expect(await caresInDb(page, tid)).toHaveLength(1);
-    expect((await caresInDb(page, tid))[0].food).toEqual(["Weeds"]);
+    expect((await caresInDb(page, tid))[0].food).toEqual(["Grass / hay"]);
   });
 
   test("yesterday via its row, switching the dialog date loads and saves that day, clearing a day, bad poop chip", async ({ page }) => {
@@ -729,5 +729,135 @@ test.describe("controls marked hidden are really hidden", () => {
     await expect(dlg).toBeVisible();
     await expectMarkedHidden(dlg.locator("#cClear"));
     await expect(dlg.getByRole("button", { name: "Clear this day" })).toBeHidden({ timeout: 3000 });
+  });
+});
+
+/* ---------- Food options ---------- */
+
+test.describe("food options", () => {
+  const LIST = ["Leafy greens", "Grass / hay", "Flowers", "Cactus pad", "Pumpkin", "Chayote", "Fruit", "Pellets"];
+  const chipLabels = dlg => dlg.locator("#foodChips label");
+
+  test("the list offers Pumpkin and Chayote; Weeds and Vegetables are gone", async ({ page }) => {
+    await openApp(page);
+    await addTortoise(page, { name: "Kuro" });
+    const tid = currentTid(page), today = await pageToday(page);
+    await page.getByRole("button", { name: "Log today's care" }).click();
+    const dlg = careDlg(page);
+    await expect(chipLabels(dlg)).toHaveText(LIST);
+    await fillCare(dlg, { foods: ["Chayote", "Pumpkin"] });
+    await saveCare(dlg);
+    await expectToast(page, "Care saved");
+    expect((await caresInDb(page, tid))[0].food).toEqual(["Pumpkin", "Chayote"]);
+    await expect(dayRow(page, today).locator(".marks .chip")).toHaveText(["Pumpkin, Chayote"]);
+  });
+
+  // Days logged before the list changed keep their foods: they show as extra chips, checked, and survive a re-save.
+  test("a day logged with a food that left the list keeps it when saved again; other days don't show it", async ({ page }) => {
+    await openApp(page);
+    const today = await pageToday(page), yesterday = await shift(page, today, -1);
+    const old = { id: `c_t1_${today}`, kind: "care", tortoiseId: "t1", date: today, createdAt: 1, soaked: false,
+      food: ["Weeds", "Flowers", "Vegetables"], foodNote: "", poop: "", urates: "", notes: "" };
+    await seed(page, { tortoises: [{ id: "t1", name: "Lama", species: "Leopard", sex: "Unknown", birth: null, createdAt: 1 }], entries: [old] });
+    await page.locator(".t-card").click();
+    await expect(dayRow(page, today).locator(".marks .chip")).toHaveText(["Weeds, Flowers +1"]);
+
+    // The old day: the list plus its two old foods, all three of its foods checked.
+    await dayRow(page, today).click();
+    const dlg = careDlg(page);
+    await expect(chipLabels(dlg)).toHaveText([...LIST, "Weeds", "Vegetables"]);
+    for(const f of ["Weeds", "Flowers", "Vegetables"]) await expect(foodBox(dlg, f)).toBeChecked();
+
+    // Another day in the same dialog shows only the current list; back on the old day the old foods return.
+    await dlg.locator("[name=date]").fill(yesterday);
+    await expect(chipLabels(dlg)).toHaveText(LIST);
+    await dlg.locator("[name=date]").fill(today);
+    await expect(chipLabels(dlg)).toHaveText([...LIST, "Weeds", "Vegetables"]);
+    await expect(foodBox(dlg, "Vegetables")).toBeChecked();
+
+    // Saving the day again (only a note changed) keeps every food.
+    await dlg.locator("[name=notes]").fill("Re-saved");
+    await saveCare(dlg);
+    await expectToast(page, "Care updated");
+    expect((await caresInDb(page, "t1"))[0].food).toEqual(["Flowers", "Weeds", "Vegetables"]);
+
+    // Unticking an old food removes it like any other.
+    await dayRow(page, today).click();
+    await foodChip(dlg, "Weeds").click();
+    await saveCare(dlg);
+    await expect(dlg).toBeHidden();
+    expect((await caresInDb(page, "t1"))[0].food).toEqual(["Flowers", "Vegetables"]);
+    await page.reload();
+    await dayRow(page, today).click();
+    await expect(chipLabels(dlg)).toHaveText([...LIST, "Vegetables"]);
+  });
+});
+
+/* ---------- Scrolling behind dialogs ---------- */
+
+test.describe("dialogs", () => {
+  // Scroll by yDistance (negative = down) starting at (x, y). On the Pixel 7 project it is a finger: separate swipes of
+  // at most 180 px (press, drag in small steps, lift), because Chrome's synthesized touch gesture does nothing in
+  // headless mode and a scroll only moves on to the page behind on a NEW swipe after the dialog hit its end.
+  // On desktop it is Chrome's synthesized mouse-wheel gesture.
+  async function scrollGesture(page, x, y, yDistance){
+    const cdp = await page.context().newCDPSession(page);
+    const isMobile = await page.evaluate(() => navigator.maxTouchPoints > 0);
+    if(isMobile){
+      for(let left = yDistance; Math.abs(left) > 0.5;){
+        const chunk = Math.sign(left) * Math.min(180, Math.abs(left));
+        await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x, y }] });
+        for(let i = 1; i <= 9; i++){
+          await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ x, y: Math.round(y + chunk * i / 9) }] });
+          await page.waitForTimeout(16);
+        }
+        await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+        await page.waitForTimeout(250);   // let the fling settle before the next swipe
+        left -= chunk;
+      }
+    }else{
+      await cdp.send("Input.synthesizeScrollGesture", { x, y, yDistance, speed: 3000, gestureSourceType: "mouse" });
+    }
+    await cdp.detach();
+  }
+  const scrollY = page => page.evaluate(() => Math.round(window.scrollY));
+
+  // Regression: scrolling inside a dialog (or on its backdrop) also scrolled the page behind it.
+  test("the page behind an open dialog doesn't scroll, and keeps its place when the dialog closes", async ({ page }) => {
+    const vp = page.viewportSize();
+    await page.setViewportSize({ width: vp.width, height: 480 });   // short screen: the page and the dialog both overflow
+    await openApp(page);
+    await addTortoise(page, { name: "Kuro" });
+    expect(await page.evaluate(() => document.documentElement.scrollHeight - innerHeight)).toBeGreaterThan(200);
+    await page.evaluate(() => window.scrollTo(0, 120));
+    await expect.poll(() => scrollY(page)).toBe(120);
+
+    await page.getByRole("button", { name: "Log measurement" }).click();
+    const dlg = page.locator("#mDlg");
+    await expect(dlg).toBeVisible();
+
+    // Scroll down inside the dialog, far past its end: the dialog scrolls, the page doesn't.
+    const box = await dlg.boundingBox();
+    const cx = Math.round(box.x + box.width / 2), cy = Math.round(box.y + box.height / 2);
+    await scrollGesture(page, cx, cy, -900);
+    await expect.poll(() => dlg.evaluate(d => d.scrollTop)).toBeGreaterThan(0);
+    await scrollGesture(page, cx, cy, -900);
+    expect(await scrollY(page)).toBe(120);
+    // And back up past the top.
+    await scrollGesture(page, cx, cy, 1800);
+    await expect.poll(() => dlg.evaluate(d => d.scrollTop)).toBe(0);
+    expect(await scrollY(page)).toBe(120);
+    // On the backdrop beside the dialog (left edge, lower half, so a finger stays on screen).
+    await scrollGesture(page, 4, 400, -400);
+    expect(await scrollY(page)).toBe(120);
+    expect(await page.evaluate(() => getComputedStyle(document.documentElement).overflowY)).toBe("hidden");
+
+    // Closed: the page is where it was and scrolls again.
+    await dlg.getByRole("button", { name: "Cancel" }).click();
+    await expect(dlg).toBeHidden();
+    await expect.poll(() => page.evaluate(() => getComputedStyle(document.documentElement).overflowY)).not.toBe("hidden");
+    expect(await scrollY(page)).toBe(120);
+    await scrollGesture(page, cx, 200, -200);
+    await expect.poll(() => scrollY(page)).toBeGreaterThan(120);
   });
 });

@@ -299,7 +299,7 @@ test.describe("a save that storage refuses", () => {
     const dlg = page.locator("#cDlg");
     const change = async () => {
       await dlg.locator("[name=soaked]").uncheck();
-      await foodChip(dlg, "Weeds").click();
+      await foodChip(dlg, "Pumpkin").click();
       await dlg.locator("[name=poop]").selectOption("Runny");
       await dlg.locator("[name=notes]").fill("Second note");
     };
@@ -324,7 +324,7 @@ test.describe("a save that storage refuses", () => {
     await row.click();
     await expect(dlg.locator("[name=soaked]")).toBeChecked();
     await expect(dlg.locator('#foodChips input[value="Fruit"]')).toBeChecked();
-    await expect(dlg.locator('#foodChips input[value="Weeds"]')).not.toBeChecked();
+    await expect(dlg.locator('#foodChips input[value="Pumpkin"]')).not.toBeChecked();
     await expect(dlg.locator("[name=poop]")).toHaveValue("Normal, firm");
     await expect(dlg.locator("[name=notes]")).toHaveValue("First note");
 
@@ -333,10 +333,10 @@ test.describe("a save that storage refuses", () => {
     await dlg.getByRole("button", { name: "Save care" }).click();
     await expect(dlg).toBeHidden();
     await expect(toast(page)).toHaveText("Care updated");
-    await expect(row.locator(".marks .chip")).toHaveText(["Weeds, Fruit", "Poop: Runny"]);
+    await expect(row.locator(".marks .chip")).toHaveText(["Pumpkin, Fruit", "Poop: Runny"]);
     await expect(row.locator(".marks .nt")).toHaveText("Second note");
     await expect(statValue(page, "Last soaked")).toHaveText("Not yet");
-    const updated = { ...care, soaked: false, food: ["Weeds", "Fruit"], poop: "Runny", notes: "Second note" };
+    const updated = { ...care, soaked: false, food: ["Pumpkin", "Fruit"], poop: "Runny", notes: "Second note" };
     expect((await readDb(page)).entries).toEqual([updated]);
     expect((await memory(page)).entries).toEqual([updated]);
   });

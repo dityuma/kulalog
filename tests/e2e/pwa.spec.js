@@ -336,6 +336,9 @@ test.describe("I1 installable", () => {
     expect(start.headers()["content-type"]).toContain("text/html");
     expect(m.theme_color).toMatch(/^#[0-9a-f]{6}$/i);
     expect(m.background_color).toMatch(/^#[0-9a-f]{6}$/i);
+    // The launch (splash) screen uses background_color around the icon; it matches the icons' own background so the
+    // icon blends in instead of sitting on a white or pale square.
+    expect(m.background_color.toUpperCase()).toBe("#1E2619");
     await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute("content", m.theme_color);
 
     // Icons: 192 and 512 for "any" and for "maskable".

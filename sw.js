@@ -1,6 +1,6 @@
 /* Kulalog service worker.
    Bump VERSION whenever any app file changes, so installed copies pick up the update. */
-const VERSION = "v7";
+const VERSION = "v8";
 const CACHE = "kulalog-" + VERSION;
 
 const APP_FILES = [

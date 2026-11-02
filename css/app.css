@@ -115,6 +115,9 @@ main{max-width:760px;margin:0 auto;padding:24px 18px 64px}
 /* Dialogs */
 dialog{border:0;border-radius:20px;padding:0;background:var(--surface);color:var(--ink);width:min(560px,calc(100vw - 24px));max-height:calc(100dvh - 24px)}
 dialog::backdrop{background:rgba(10,14,8,.55)}
+/* The page behind an open dialog doesn't scroll; scrolling inside the dialog stops at its ends. */
+html:has(dialog[open]){overflow:hidden}
+dialog{overscroll-behavior:contain}
 .dlg-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--surface);z-index:1}
 .dlg-head h2{font-size:1.3rem}
 .dlg-body{padding:18px 20px;display:grid;gap:16px}

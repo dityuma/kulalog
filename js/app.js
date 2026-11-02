@@ -4,7 +4,7 @@ const SPECIES = [
   "Asian forest (Manouria emys)", "Impressed", "Hermann's", "Greek (spur-thighed)", "Russian (Horsfield's)",
   "Marginated", "Hingeback", "Other"
 ];
-const FOODS = ["Leafy greens","Weeds","Grass / hay","Flowers","Cactus pad","Vegetables","Fruit","Pellets"];
+const FOODS = ["Leafy greens","Grass / hay","Flowers","Cactus pad","Pumpkin","Chayote","Fruit","Pellets"];
 const POOP = ["Normal, firm","Soft","Runny","Dry / hard","Contains undigested food","None"];
 const URATES = ["Clear / liquid","Soft white paste","Gritty / chalky","None"];
 
@@ -502,13 +502,20 @@ $("#mForm").onsubmit = async ev => {
 
 /* ---------- Daily care form ---------- */
 let careCtx = null;
-$("#foodChips").innerHTML = FOODS.map(f => `<label><input type="checkbox" name="food" value="${esc(f)}"><span>${esc(f)}</span></label>`).join("");
+// A day logged with a food that is no longer in FOODS (e.g. "Weeds" or "Vegetables" from before the list changed)
+// shows that food as an extra chip, so saving the day again keeps it.
+function renderFoodChips(stored = []){
+  const foods = FOODS.concat(stored.filter(x => !FOODS.includes(x)));
+  $("#foodChips").innerHTML = foods.map(f => `<label><input type="checkbox" name="food" value="${esc(f)}"><span>${esc(f)}</span></label>`).join("");
+}
+renderFoodChips();
 $("#cForm").elements.poop.insertAdjacentHTML("beforeend", POOP.map(p => `<option>${esc(p)}</option>`).join(""));
 $("#cForm").elements.urates.insertAdjacentHTML("beforeend", URATES.map(p => `<option>${esc(p)}</option>`).join(""));
 function fillCare(date){
   const f = $("#cForm"); f.reset(); $("#cErr").hidden = true;
   f.elements.date.value = date;
   const e = careOf(careCtx.tid, date);
+  renderFoodChips(e ? e.food || [] : []);
   if(e){
     f.elements.soaked.checked = !!e.soaked;
     f.querySelectorAll("[name=food]").forEach(c => c.checked = (e.food || []).includes(c.value));

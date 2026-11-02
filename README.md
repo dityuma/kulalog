@@ -24,7 +24,7 @@ Open http://localhost:8080/. `localhost` counts as a secure context, so the serv
 
 ## Releasing a change
 
-The service worker serves the app from its cache first. **After changing any app file, raise `VERSION` in `sw.js`** (e.g. `v7` to `v8`). Installed copies then download the new version in the background and show "A new version of Kulalog is ready. Reload".
+The service worker serves the app from its cache first. **After changing any app file, raise `VERSION` in `sw.js`** (e.g. `v8` to `v9`). Installed copies then download the new version in the background and show "A new version of Kulalog is ready. Reload".
 
 All paths are relative, so the folder can be hosted as-is on GitHub Pages or any static host (only the app files are needed, not `node_modules` or `tests`).
 
@@ -52,7 +52,7 @@ npm test
 | Command | What it covers |
 | --- | --- |
 | `npm run test:unit` | Vitest (220 tests): number parsing incl. thousands separators, weight units, growth per month, one care record per day, migration, backup checks against hostile files, CSV, dates |
-| `npm run test:e2e` | Playwright (91 tests x desktop + Pixel 7): add tortoise, daily care, measurements, 7-day/monthly views, backup round trip, CSV, offline, installability, persistence across reload and browser restart, persistent storage, update flow (incl. several tabs), dark mode, hostile backups and stored data (security), slow or unreachable CDN, failing storage, midnight rollover |
+| `npm run test:e2e` | Playwright (94 tests x desktop + Pixel 7): add tortoise, daily care, measurements, 7-day/monthly views, backup round trip, CSV, offline, installability, persistence across reload and browser restart, persistent storage, update flow (incl. several tabs), dark mode, hostile backups and stored data (security), slow or unreachable CDN, failing storage, midnight rollover |
 | `npm run test:lighthouse` | Lighthouse (mobile + desktop, plus populated screens, dialogs and dark mode). Fails under a11y 95, best practices 95, SEO 90, performance 80. Reports in `tests/lighthouse/reports/` |
 
 Notes:
