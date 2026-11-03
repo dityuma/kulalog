@@ -18,7 +18,7 @@ Open http://localhost:8080/. `localhost` counts as a secure context, so the serv
 | `js/logic.js` | Pure data logic (number parsing, units, dates, growth rate, care records, migration, backup checks, CSV). Also loaded by the unit tests |
 | `js/app.js` | UI, IndexedDB storage, dialogs, export/import, service worker registration |
 | `sw.js` | Service worker: precaches the app; caches Chart.js and the Google Fonts files too (best effort, 10 s limit, retried on a later visit) |
-| `manifest.webmanifest`, `kulalog-icons/` | Web app manifest and icons (incl. maskable) |
+| `manifest.webmanifest`, `kulalog-icons/` | Web app manifest and icons. The manifest's "any" icons are `icon-any-*` (the artwork without its square background, made from `icon.svg`), so Android's launch screen shows the tortoise straight on `background_color`; maskable icons keep the square for launchers |
 | `serve.js` | Zero-dependency static server for local testing |
 | `.nojekyll` | Tells GitHub Pages to serve the files as they are |
 

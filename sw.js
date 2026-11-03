@@ -1,6 +1,6 @@
 /* Kulalog service worker.
    Bump VERSION whenever any app file changes, so installed copies pick up the update. */
-const VERSION = "v9";
+const VERSION = "v10";
 const CACHE = "kulalog-" + VERSION;
 
 const APP_FILES = [
@@ -14,8 +14,9 @@ const APP_FILES = [
   "kulalog-icons/icon-maskable.svg",
   "kulalog-icons/favicon-32.png",
   "kulalog-icons/apple-touch-icon.png",
-  "kulalog-icons/icon-192.png",
-  "kulalog-icons/icon-512.png",
+  "kulalog-icons/icon-any.svg",
+  "kulalog-icons/icon-any-192.png",
+  "kulalog-icons/icon-any-512.png",
   "kulalog-icons/icon-maskable-192.png",
   "kulalog-icons/icon-maskable-512.png"
 ];

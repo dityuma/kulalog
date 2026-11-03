@@ -18,7 +18,7 @@ const FONTS_CSS = /const FONTS_CSS = "([^"]+)";/.exec(SW_SRC)[1];
 const APP_FILES = [
   "", "index.html", "css/app.css", "js/logic.js", "js/app.js", "manifest.webmanifest",
   "kulalog-icons/icon.svg", "kulalog-icons/icon-maskable.svg", "kulalog-icons/favicon-32.png",
-  "kulalog-icons/apple-touch-icon.png", "kulalog-icons/icon-192.png", "kulalog-icons/icon-512.png",
+  "kulalog-icons/apple-touch-icon.png", "kulalog-icons/icon-any.svg", "kulalog-icons/icon-any-192.png", "kulalog-icons/icon-any-512.png",
   "kulalog-icons/icon-maskable-192.png", "kulalog-icons/icon-maskable-512.png"
 ];
 const PERSISTENT_TEXT = "Storage is persistent: the browser won't clear your records to free up space.";
@@ -373,6 +373,22 @@ test.describe("I1 installable", () => {
       expect(px.transparent, url + " transparent pixels").toBe(0);
       expect(px.artwork, url + " has artwork").toBeGreaterThan(px.width * px.height * 0.05);
       expect(px.outsideSafeZone / px.artwork, url + " share of the artwork outside the safe zone").toBeLessThan(0.005);
+    }
+
+    // The "any" icons are what Android's launch screen shows on background_color. They have no background square:
+    // a square's edge showed as a thin dark border on the launch screen. Their corners are see-through, the art is there.
+    for(const icon of m.icons.filter(i => i.type === "image/png" && purposes(i).includes("any"))){
+      const url = new URL(icon.src, manifestUrl).href;
+      const corners = await page.evaluate(async src => {
+        const img = new Image(); img.src = src; await img.decode();
+        const c = document.createElement("canvas"); c.width = img.naturalWidth; c.height = img.naturalHeight;
+        const g = c.getContext("2d"); g.drawImage(img, 0, 0);
+        const a = (x, y) => g.getImageData(x, y, 1, 1).data[3];
+        const w = c.width - 1, h = c.height - 1, mid = g.getImageData(Math.round(w / 2), Math.round(h / 2), 1, 1).data[3];
+        return { corners: [a(0, 0), a(w, 0), a(0, h), a(w, h)], centre: mid };
+      }, url);
+      expect(corners.corners, url + " corners").toEqual([0, 0, 0, 0]);
+      expect(corners.centre, url + " artwork in the middle").toBe(255);
     }
 
     // Favicons and apple-touch-icon.
