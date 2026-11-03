@@ -1,6 +1,6 @@
 /* Kulalog service worker.
    Bump VERSION whenever any app file changes, so installed copies pick up the update. */
-const VERSION = "v8";
+const VERSION = "v9";
 const CACHE = "kulalog-" + VERSION;
 
 const APP_FILES = [
@@ -79,6 +79,22 @@ self.addEventListener("fetch", event => {
       const cached = await caches.match("index.html", { cacheName: CACHE });
       if(cached) return cached;
       return fetch(req);
+    })());
+    return;
+  }
+
+  // The manifest (name, colours, icons) comes from the network first, so the browser's checks for an updated
+  // installed app (Android rebuilds it when the manifest changes) see the current manifest even while an older
+  // worker is still in charge. Offline it falls back to the cached copy.
+  if(url.origin === location.origin && url.pathname.endsWith("/manifest.webmanifest")){
+    event.respondWith((async () => {
+      try{
+        const res = await fetch(req, { cache: "no-cache" });
+        if(res.ok){ const copy = res.clone(); caches.open(CACHE).then(c => c.put("manifest.webmanifest", copy)).catch(() => {}); }
+        return res;
+      }catch(e){
+        return (await caches.match("manifest.webmanifest", { cacheName: CACHE })) || Response.error();
+      }
     })());
     return;
   }

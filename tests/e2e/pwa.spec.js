@@ -738,7 +738,7 @@ test.describe("E6 offline", () => {
 
 /* ---------- I5 update flow ---------- */
 
-test("I5 first install doesn't reload; an update waits for Reload, then the new cache replaces the old", async ({ page }, testInfo) => {
+test("I5 first install doesn't reload; an update found during a visit waits for Reload, one left waiting is applied on the next open; the manifest stays current", async ({ page }, testInfo) => {
   test.setTimeout(120_000);
   const dir = testInfo.outputPath("app");
   copyApp(dir);
@@ -794,26 +794,12 @@ test("I5 first install doesn't reload; an update waits for Reload, then the new 
     await expect(page.locator(".profile h1")).toHaveText("Updatey");
     await expect(desc).toHaveAttribute("content", oldDesc);
 
-    // Reopening the app (a plain reload) while the update waits: still the old version, and the update is offered again.
-    await page.reload();
-    await expect(page.locator(".profile h1")).toHaveText("Updatey");
-    expect(loads).toBe(2);
-    await expect(desc).toHaveAttribute("content", oldDesc);
-    await expect(bar).toBeVisible({ timeout: 15_000 });
-    await page.evaluate(() => { window["__marker"] = 2; });
-    const stillWaiting = await page.evaluate(async () => {
-      const reg = await navigator.serviceWorker.getRegistration();
-      return { waiting: reg.waiting && reg.waiting.state, active: reg.active && reg.active.state, activeScript: reg.active && reg.active.scriptURL };
-    });
-    expect(stillWaiting).toEqual({ waiting: "installed", active: "activated", activeScript: url + "sw.js" });
-    expect((await cacheState(page)).keys.sort()).toEqual([CACHE_NAME, newCache].sort());
-
     // The user taps Reload: the page reloads once, on the new version.
     const reloaded = page.waitForEvent("load");
     await bar.locator("#updateBtn").click();
     await reloaded;
     await expect(page.locator(".profile h1")).toHaveText("Updatey");
-    expect(loads).toBe(3);
+    expect(loads).toBe(2);
     expect(await page.evaluate(() => window["__marker"])).toBeUndefined();
     await expect(desc).toHaveAttribute("content", newDesc);
     await expect(page.locator("#updateBar")).toBeHidden();
@@ -826,6 +812,41 @@ test("I5 first install doesn't reload; an update waits for Reload, then the new 
     expect((await cacheState(page)).entries[newCache].length).toBeGreaterThan(14);
     const db = await readDb(page);
     expect(db.tortoises).toEqual([expect.objectContaining({ id, name: "Updatey" })]);
+
+    // Regression: an update the keeper never applied with Reload stayed waiting for good, so an installed app kept its
+    // old version (and kept giving Android an old manifest). An update that downloaded during an earlier visit is now
+    // applied when the app is opened again, before anything is typed in.
+    const desc3 = newDesc + " Again.";
+    fs.writeFileSync(htmlPath, fs.readFileSync(htmlPath, "utf8").replace(`content="${newDesc}"`, `content="${desc3}"`));
+    const v3 = SW_VERSION + "-test3", cache3 = "kulalog-" + v3;
+    fs.writeFileSync(swPath, fs.readFileSync(swPath, "utf8").replace(`const VERSION = "${newVersion}";`, `const VERSION = "${v3}";`));
+    await page.evaluate(async () => { const reg = await navigator.serviceWorker.getRegistration(); await reg.update(); });
+    await expect(bar).toBeVisible({ timeout: 30_000 });          // found during the visit: offered, not applied
+    await expect(desc).toHaveAttribute("content", newDesc);
+    const loadsBefore = loads;
+    const twoLoads = new Promise(resolve => {
+      let n = 0;
+      const onLoad = () => { if(++n === 2){ page.off("load", onLoad); resolve(undefined); } };
+      page.on("load", onLoad);
+    });
+    await page.reload();                                         // the keeper opens the app again without tapping Reload
+    await twoLoads;                                              // ...and it reloads itself once into the new version
+    await expect(desc).toHaveAttribute("content", desc3, { timeout: 30_000 });
+    await expect(page.locator(".profile h1")).toHaveText("Updatey");
+    expect(loads).toBe(loadsBefore + 2);                         // the reopen, plus one automatic reload into the new version
+    await expect(page.locator("#updateBar")).toBeHidden();
+    await expect.poll(async () => (await cacheState(page)).keys).toEqual([cache3]);
+
+    // Regression: the worker served the manifest from its cache, so the browser kept seeing the old name, colours and
+    // icons until the keeper applied an update. Online it now comes from the server (without a new worker version);
+    // offline from the copy cached by the last online fetch.
+    const manPath = path.join(dir, "manifest.webmanifest");
+    const man = JSON.parse(fs.readFileSync(manPath, "utf8"));
+    fs.writeFileSync(manPath, JSON.stringify({ ...man, background_color: "#123456" }));
+    const fetchedBg = () => page.evaluate(async () => (await (await fetch("manifest.webmanifest")).json()).background_color);
+    expect(await fetchedBg()).toBe("#123456");
+    await stopServer(server);
+    expect(await fetchedBg()).toBe("#123456");
   }finally{
     await stopServer(server);
   }

@@ -657,7 +657,9 @@ function registerSW(){
         accepted = true; w.postMessage("skipWaiting");
       };
     };
-    if(reg.waiting && navigator.serviceWorker.controller) offer(reg.waiting);
+    // An update that finished downloading during an earlier visit is applied now, while the app is starting and
+    // nothing has been typed in yet. (Waiting for a tap on Reload left installed apps on old versions for good.)
+    if(reg.waiting && navigator.serviceWorker.controller){ accepted = true; reg.waiting.postMessage("skipWaiting"); }
     reg.addEventListener("updatefound", () => {
       const w = reg.installing;
       w.addEventListener("statechange", () => { if(w.state === "installed" && navigator.serviceWorker.controller) offer(w); });
